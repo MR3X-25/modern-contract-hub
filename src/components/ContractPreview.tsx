@@ -6,16 +6,30 @@ import { QRCodeSVG } from 'qrcode.react';
 import Barcode from 'react-barcode';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-import logoMr3x from '@/assets/logo-mr3x.png';
+import logoMr3x3d from '@/assets/logo-mr3x-3d.png';
 import { generateContractMetadata } from '@/lib/security';
 import { toast } from 'sonner';
+import { SignatureData } from './DigitalSignature';
+import { InspectionData } from './InspectionUpload';
 
 interface ContractPreviewProps {
   content: string;
   onContentChange: (content: string) => void;
+  inspectionData?: InspectionData;
+  signatures?: {
+    locador: SignatureData | null;
+    locatario: SignatureData | null;
+  };
+  agencyName?: string;
 }
 
-export const ContractPreview = ({ content, onContentChange }: ContractPreviewProps) => {
+export const ContractPreview = ({ 
+  content, 
+  onContentChange, 
+  inspectionData,
+  signatures,
+  agencyName 
+}: ContractPreviewProps) => {
   const [metadata, setMetadata] = useState<{
     token: string;
     hash: string;
@@ -81,6 +95,8 @@ export const ContractPreview = ({ content, onContentChange }: ContractPreviewPro
     );
   }
 
+  const hasInspectionWarning = !inspectionData?.token && !inspectionData?.pdfFile;
+
   return (
     <div className="space-y-4">
       <div className="flex gap-2 print:hidden">
@@ -100,92 +116,192 @@ export const ContractPreview = ({ content, onContentChange }: ContractPreviewPro
         </Button>
       </div>
 
-      <Card className="bg-white text-gray-900 p-8 print:shadow-none" ref={previewRef}>
-        {/* Header with Logo and QR Code */}
-        <div className="flex justify-between items-start mb-6 border-b-2 border-gray-200 pb-4">
-          <div>
-            <img src={logoMr3x} alt="MR3X Logo" className="h-24 w-auto object-contain mb-2" />
-            <p className="text-xs text-gray-600 font-semibold">
-              GESTÃO DE PAGAMENTOS E COBRANÇAS
-              <br />
-              ALUGUÉIS RESIDENCIAIS E COMERCIAIS
-            </p>
+      <Card className="bg-white text-gray-900 p-8 print:shadow-none relative overflow-hidden" ref={previewRef}>
+        {/* Watermark CONFIDENCIAL */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-5 print:opacity-10" style={{ transform: 'rotate(-45deg)' }}>
+          <div className="text-9xl font-black tracking-wider">
+            CONFIDENCIAL
           </div>
-          <div className="text-center">
-            <QRCodeSVG
-              value={`https://mr3x.com.br/verify/${metadata.hash}`}
-              size={100}
-              level="H"
-              includeMargin
+        </div>
+
+        {/* Vertical Barcode on Left Margin */}
+        <div className="absolute left-0 top-0 bottom-0 flex items-center justify-center" style={{ width: '25px' }}>
+          <div style={{ transform: 'rotate(-90deg)', transformOrigin: 'center', whiteSpace: 'nowrap' }}>
+            <Barcode 
+              value={metadata.token} 
+              width={1}
+              height={40}
+              fontSize={8}
             />
-            <p className="text-[8px] text-gray-500 mt-1">Verificação Digital</p>
           </div>
         </div>
 
-        {/* Editable Content */}
-        <div className="mb-6 print:hidden">
-          <Textarea
-            value={content}
-            onChange={(e) => onContentChange(e.target.value)}
-            className="min-h-[400px] font-mono text-sm bg-gray-50 border-gray-300"
-          />
-        </div>
+        {/* Main Content with Left Padding for Barcode */}
+        <div style={{ marginLeft: '30px' }}>
+          {/* Header Centralizado */}
+          <div className="text-center mb-8 border-b-4 border-gray-900 pb-6">
+            <div className="flex justify-center items-center gap-8 mb-4">
+              <img src={logoMr3x3d} alt="MR3X Logo" className="h-24 w-auto object-contain" />
+              
+              <div className="text-center">
+                <h1 className="text-5xl font-black text-gray-900 tracking-tight mb-2">
+                  CONTRATO
+                </h1>
+                <p className="text-lg font-bold text-gray-700 uppercase tracking-wide">
+                  MR3X - Tecnologia em Gestão de<br />Pagamentos e Cobranças de Aluguéis
+                </p>
+              </div>
 
-        {/* Print Content */}
-        <div className="hidden print:block whitespace-pre-wrap font-serif text-sm leading-relaxed">
-          {content}
-        </div>
+              <QRCodeSVG
+                value={`https://mr3x.com.br/verify/${metadata.hash}`}
+                size={80}
+                level="H"
+                includeMargin={true}
+              />
+            </div>
 
-        {/* Metadata Section */}
-        <div className="mt-8 pt-4 border-t-2 border-gray-200">
-          <div className="grid grid-cols-2 gap-4 text-xs mb-4">
+            {agencyName && (
+              <div className="mt-4 pt-4 border-t border-gray-300">
+                <p className="text-sm font-bold text-gray-800">
+                  {agencyName}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Security Metadata */}
+          <div className="grid grid-cols-2 gap-2 mb-6 p-4 bg-gray-50 border border-gray-300 rounded text-xs">
             <div>
-              <p className="font-bold text-gray-700">Token de Autenticação:</p>
-              <p className="font-mono text-gray-600">{metadata.token}</p>
+              <span className="font-bold">Token:</span> {metadata.token}
             </div>
             <div>
-              <p className="font-bold text-gray-700">Endereço IP:</p>
-              <p className="font-mono text-gray-600">{metadata.ip}</p>
+              <span className="font-bold">Data:</span> {new Date(metadata.timestamp).toLocaleString('pt-BR')}
             </div>
             <div className="col-span-2">
-              <p className="font-bold text-gray-700">Hash de Verificação:</p>
-              <p className="font-mono text-gray-600 break-all text-[10px]">{metadata.hash}</p>
+              <span className="font-bold">Hash SHA-256:</span>
+              <div className="break-all font-mono text-[10px] mt-1">{metadata.hash}</div>
             </div>
-            <div className="col-span-2">
-              <p className="font-bold text-gray-700">Data e Hora:</p>
-              <p className="text-gray-600">{new Date(metadata.timestamp).toLocaleString('pt-BR')}</p>
+            <div>
+              <span className="font-bold">IP:</span> {metadata.ip}
+            </div>
+            <div>
+              <span className="font-bold">Data Eletrônica:</span> {new Date().toLocaleDateString('pt-BR')}
             </div>
           </div>
 
-          {/* Barcode */}
-          <div className="flex justify-center mt-4">
-            <Barcode
+          {/* Inspection Warning/Info */}
+          {inspectionData && (
+            <div className={`mb-6 p-4 rounded border ${
+              hasInspectionWarning 
+                ? 'bg-yellow-50 border-yellow-400 text-yellow-800' 
+                : 'bg-green-50 border-green-400 text-green-800'
+            }`}>
+              {hasInspectionWarning ? (
+                <div className="flex items-start gap-2">
+                  <span className="text-xl">⚠️</span>
+                  <div>
+                    <p className="font-bold text-sm">ATENÇÃO: Termo de Vistoria Não Anexado</p>
+                    <p className="text-xs mt-1">
+                      Não há termo de vistoria vinculado a este contrato. Recomenda-se anexar o PDF do termo de vistoria ou informar o token correspondente.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-start gap-2">
+                  <span className="text-xl">✅</span>
+                  <div>
+                    <p className="font-bold text-sm">Termo de Vistoria</p>
+                    {inspectionData.token && (
+                      <p className="text-xs mt-1">
+                        <span className="font-semibold">Token:</span> {inspectionData.token}
+                      </p>
+                    )}
+                    {inspectionData.pdfFile && (
+                      <p className="text-xs mt-1">
+                        <span className="font-semibold">PDF Anexado:</span> {inspectionData.pdfFile.name}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Contract Content */}
+          <div className="mb-8 print:hidden">
+            <Textarea
+              value={content}
+              onChange={(e) => onContentChange(e.target.value)}
+              className="min-h-[600px] bg-white border-gray-300 text-gray-900 font-mono text-sm leading-relaxed"
+              style={{ whiteSpace: 'pre-wrap' }}
+            />
+          </div>
+
+          <div className="hidden print:block prose prose-sm max-w-none">
+            {content.split('\n').map((line, index) => {
+              const isBold = line.startsWith('**') || line.includes('CLÁUSULA') || line.includes('CONTRATO') || line.includes('LOCADOR') || line.includes('LOCATÁRIO');
+              
+              if (line.trim() === '') return <br key={index} />;
+              
+              return (
+                <p key={index} className={isBold ? 'font-bold my-2' : 'my-1'}>
+                  {line.replace(/\*\*/g, '')}
+                </p>
+              );
+            })}
+          </div>
+
+          {/* Digital Signatures Section */}
+          {signatures && (signatures.locador || signatures.locatario) && (
+            <div className="mt-8 pt-6 border-t-2 border-gray-300">
+              <h3 className="text-lg font-bold text-gray-900 mb-4">📝 Assinaturas Digitais</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {signatures.locador && (
+                  <div className="border border-gray-300 rounded p-4 bg-gray-50">
+                    <p className="font-bold text-sm mb-2">Locador(a)</p>
+                    <p className="text-xs"><span className="font-semibold">Nome:</span> {signatures.locador.name}</p>
+                    <p className="text-xs"><span className="font-semibold">CPF:</span> {signatures.locador.cpf}</p>
+                    <p className="text-xs"><span className="font-semibold">E-mail:</span> {signatures.locador.email}</p>
+                    <p className="text-xs"><span className="font-semibold">IP:</span> {signatures.locador.ip}</p>
+                    <p className="text-xs"><span className="font-semibold">Data/Hora:</span> {new Date(signatures.locador.timestamp).toLocaleString('pt-BR')}</p>
+                    <p className="text-xs break-all"><span className="font-semibold">Hash:</span> {signatures.locador.hash.substring(0, 32)}...</p>
+                  </div>
+                )}
+
+                {signatures.locatario && (
+                  <div className="border border-gray-300 rounded p-4 bg-gray-50">
+                    <p className="font-bold text-sm mb-2">Locatário(a)</p>
+                    <p className="text-xs"><span className="font-semibold">Nome:</span> {signatures.locatario.name}</p>
+                    <p className="text-xs"><span className="font-semibold">CPF:</span> {signatures.locatario.cpf}</p>
+                    <p className="text-xs"><span className="font-semibold">E-mail:</span> {signatures.locatario.email}</p>
+                    <p className="text-xs"><span className="font-semibold">IP:</span> {signatures.locatario.ip}</p>
+                    <p className="text-xs"><span className="font-semibold">Data/Hora:</span> {new Date(signatures.locatario.timestamp).toLocaleString('pt-BR')}</p>
+                    <p className="text-xs break-all"><span className="font-semibold">Hash:</span> {signatures.locatario.hash.substring(0, 32)}...</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Barcode at Bottom */}
+          <div className="mt-8 flex justify-center border-t-2 border-gray-300 pt-4">
+            <Barcode 
               value={metadata.token}
-              height={50}
-              width={1.5}
+              width={2}
+              height={60}
               fontSize={12}
-              background="#ffffff"
-              lineColor="#000000"
+              displayValue={true}
             />
           </div>
-        </div>
 
-        {/* Watermark */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-5 print:opacity-10">
-          <p className="text-8xl font-black transform -rotate-45 text-gray-400">MR3X</p>
+          {/* Footer */}
+          <div className="mt-6 text-center text-xs text-gray-600 border-t border-gray-200 pt-4">
+            <p className="font-semibold">MR3X TECNOLOGIA LTDA • CNPJ: 27.960.990/0001-66</p>
+            <p className="mt-1">Documento protegido por criptografia SHA-256 e tokens únicos</p>
+            <p className="mt-1">Verificação de autenticidade: https://mr3x.com.br/verify/{metadata.hash}</p>
+          </div>
         </div>
-      </Card>
-
-      {/* Security Info */}
-      <Card className="p-4 bg-accent/20 border-accent print:hidden">
-        <h3 className="font-bold text-sm text-foreground mb-2">🔒 Informações de Segurança</h3>
-        <ul className="text-xs text-muted-foreground space-y-1">
-          <li>✓ Contrato assinado digitalmente com hash SHA-256</li>
-          <li>✓ Token único de autenticação gerado</li>
-          <li>✓ Registro de IP completo do criador</li>
-          <li>✓ QR Code para verificação instantânea</li>
-          <li>✓ Código de barras com identificador único</li>
-        </ul>
       </Card>
     </div>
   );

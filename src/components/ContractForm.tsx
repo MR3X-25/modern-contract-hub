@@ -5,10 +5,12 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { contractTemplates } from '@/lib/contractTemplates';
+import { InspectionUpload, InspectionData } from './InspectionUpload';
 
 export interface ContractFormData {
   templateId: string;
   fields: Record<string, string>;
+  inspection: InspectionData;
 }
 
 interface ContractFormProps {
@@ -19,17 +21,23 @@ interface ContractFormProps {
 export const ContractForm = ({ onFormChange, onGeneratePreview }: ContractFormProps) => {
   const [selectedTemplate, setSelectedTemplate] = useState<string>('');
   const [formData, setFormData] = useState<Record<string, string>>({});
+  const [inspectionData, setInspectionData] = useState<InspectionData>({ token: '', pdfFile: null, pdfPreview: null });
 
   const handleTemplateChange = (templateId: string) => {
     setSelectedTemplate(templateId);
     setFormData({});
-    onFormChange({ templateId, fields: {} });
+    onFormChange({ templateId, fields: {}, inspection: inspectionData });
   };
 
   const handleFieldChange = (field: string, value: string) => {
     const updatedData = { ...formData, [field]: value };
     setFormData(updatedData);
-    onFormChange({ templateId: selectedTemplate, fields: updatedData });
+    onFormChange({ templateId: selectedTemplate, fields: updatedData, inspection: inspectionData });
+  };
+
+  const handleInspectionChange = (data: InspectionData) => {
+    setInspectionData(data);
+    onFormChange({ templateId: selectedTemplate, fields: formData, inspection: data });
   };
 
   const getFormFields = () => {
@@ -68,6 +76,74 @@ export const ContractForm = ({ onFormChange, onGeneratePreview }: ContractFormPr
 
         {selectedTemplate && (
           <>
+            {/* Campos da Agência Imobiliária */}
+            <div className="mb-6 p-4 bg-muted rounded-lg border border-border">
+              <h3 className="font-bold text-sm mb-3 text-foreground">📍 Dados da Agência Imobiliária (Opcional)</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="NOME_AGENCIA" className="text-xs text-foreground">Nome da Agência</Label>
+                  <Input
+                    id="NOME_AGENCIA"
+                    value={formData['NOME_AGENCIA'] || ''}
+                    onChange={(e) => handleFieldChange('NOME_AGENCIA', e.target.value)}
+                    className="bg-input border-border text-foreground"
+                    placeholder="Nome da Imobiliária"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="CNPJ_AGENCIA" className="text-xs text-foreground">CNPJ</Label>
+                  <Input
+                    id="CNPJ_AGENCIA"
+                    value={formData['CNPJ_AGENCIA'] || ''}
+                    onChange={(e) => handleFieldChange('CNPJ_AGENCIA', e.target.value)}
+                    className="bg-input border-border text-foreground"
+                    placeholder="00.000.000/0000-00"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="ENDERECO_AGENCIA" className="text-xs text-foreground">Endereço</Label>
+                  <Input
+                    id="ENDERECO_AGENCIA"
+                    value={formData['ENDERECO_AGENCIA'] || ''}
+                    onChange={(e) => handleFieldChange('ENDERECO_AGENCIA', e.target.value)}
+                    className="bg-input border-border text-foreground"
+                    placeholder="Endereço completo"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="TEL_AGENCIA" className="text-xs text-foreground">Telefone</Label>
+                  <Input
+                    id="TEL_AGENCIA"
+                    value={formData['TEL_AGENCIA'] || ''}
+                    onChange={(e) => handleFieldChange('TEL_AGENCIA', e.target.value)}
+                    className="bg-input border-border text-foreground"
+                    placeholder="(00) 00000-0000"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="EMAIL_AGENCIA" className="text-xs text-foreground">E-mail</Label>
+                  <Input
+                    id="EMAIL_AGENCIA"
+                    type="email"
+                    value={formData['EMAIL_AGENCIA'] || ''}
+                    onChange={(e) => handleFieldChange('EMAIL_AGENCIA', e.target.value)}
+                    className="bg-input border-border text-foreground"
+                    placeholder="contato@imobiliaria.com"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="REPRESENTANTE_AGENCIA" className="text-xs text-foreground">Representante Legal</Label>
+                  <Input
+                    id="REPRESENTANTE_AGENCIA"
+                    value={formData['REPRESENTANTE_AGENCIA'] || ''}
+                    onChange={(e) => handleFieldChange('REPRESENTANTE_AGENCIA', e.target.value)}
+                    className="bg-input border-border text-foreground"
+                    placeholder="Nome do representante"
+                  />
+                </div>
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[60vh] overflow-y-auto pr-2">
               {getFormFields().map((field) => (
                 <div key={field} className="space-y-2">
@@ -84,6 +160,8 @@ export const ContractForm = ({ onFormChange, onGeneratePreview }: ContractFormPr
                 </div>
               ))}
             </div>
+
+            <InspectionUpload onInspectionChange={handleInspectionChange} />
 
             <Button 
               onClick={onGeneratePreview}

@@ -1,16 +1,27 @@
 import { useState } from 'react';
 import { ContractForm, ContractFormData } from '@/components/ContractForm';
 import { ContractPreview } from '@/components/ContractPreview';
+import { SignatureModule } from '@/components/SignatureModule';
 import { HashVerifier } from '@/components/HashVerifier';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { getTemplateById } from '@/lib/contractTemplates';
 import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { SignatureData } from '@/components/DigitalSignature';
 import logoMr3x from '@/assets/logo-mr3x-3d.png';
 
 const Index = () => {
-  const [formData, setFormData] = useState<ContractFormData>({ templateId: '', fields: {} });
+  const [formData, setFormData] = useState<ContractFormData>({ 
+    templateId: '', 
+    fields: {}, 
+    inspection: { token: '', pdfFile: null, pdfPreview: null } 
+  });
   const [previewContent, setPreviewContent] = useState<string>('');
+  const [showSignatureModule, setShowSignatureModule] = useState(false);
+  const [signatures, setSignatures] = useState<{
+    locador: SignatureData | null;
+    locatario: SignatureData | null;
+  }>({ locador: null, locatario: null });
 
   const handleFormChange = (data: ContractFormData) => {
     setFormData(data);
@@ -29,7 +40,14 @@ const Index = () => {
     });
 
     setPreviewContent(content);
+    setShowSignatureModule(false);
     toast.success('Preview gerado com sucesso!');
+  };
+
+  const handleSignaturesComplete = (sigs: { locador: SignatureData | null; locatario: SignatureData | null }) => {
+    setSignatures(sigs);
+    setShowSignatureModule(false);
+    toast.success('Contrato assinado digitalmente! Agora você pode gerar o PDF.');
   };
 
   return (
@@ -57,21 +75,40 @@ const Index = () => {
           </TabsList>
           
           <TabsContent value="generator">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div>
-                <ContractForm
-                  onFormChange={handleFormChange}
-                  onGeneratePreview={handleGeneratePreview}
-                />
-              </div>
+            {showSignatureModule ? (
+              <SignatureModule
+                contractContent={previewContent}
+                onBack={() => setShowSignatureModule(false)}
+                onSignaturesComplete={handleSignaturesComplete}
+              />
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div>
+                  <ContractForm
+                    onFormChange={handleFormChange}
+                    onGeneratePreview={handleGeneratePreview}
+                  />
+                </div>
 
-              <div>
-                <ContractPreview
-                  content={previewContent}
-                  onContentChange={setPreviewContent}
-                />
+                <div className="space-y-4">
+                  {previewContent && (
+                    <button
+                      onClick={() => setShowSignatureModule(true)}
+                      className="w-full mb-4 px-4 py-3 bg-gradient-to-r from-primary to-teal text-white font-bold rounded-lg hover:opacity-90 transition-opacity"
+                    >
+                      ✍️ Ir para Assinaturas Digitais
+                    </button>
+                  )}
+                  <ContractPreview
+                    content={previewContent}
+                    onContentChange={setPreviewContent}
+                    inspectionData={formData.inspection}
+                    signatures={signatures}
+                    agencyName={formData.fields.NOME_AGENCIA || formData.fields.RAZAO_SOCIAL_IMOBILIARIA}
+                  />
+                </div>
               </div>
-            </div>
+            )}
           </TabsContent>
 
           <TabsContent value="verify">

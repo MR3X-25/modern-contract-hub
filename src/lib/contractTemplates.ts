@@ -14,6 +14,10 @@ export const contractTemplates: ContractTemplate[] = [
 
 Pelo presente instrumento particular de contrato de locação residencial, as partes:
 
+**CORRETOR RESPONSÁVEL:**
+Nome: [NOME_CORRETOR]
+CRECI: [CRECI_CORRETOR]
+
 **LOCADOR(A):**
 Nome: [NOME_LOCADOR]
 CPF: [CPF_LOCADOR]
@@ -93,6 +97,10 @@ E por estarem assim justos e contratados, firmam o presente instrumento em 2 (du
     content: `**CONTRATO DE LOCAÇÃO RESIDENCIAL – LOCADOR PESSOA FÍSICA E LOCATÁRIO PESSOA JURÍDICA**
 
 Pelo presente instrumento particular, as partes a seguir identificadas celebram o presente contrato de locação residencial:
+
+**CORRETOR RESPONSÁVEL:**
+Nome: [NOME_CORRETOR]
+CRECI: [CRECI_CORRETOR]
 
 **LOCADOR(A) – PESSOA FÍSICA:**
 Nome: [NOME_LOCADOR]
@@ -175,6 +183,10 @@ E por estarem assim justos e contratados, firmam o presente instrumento.
 
 Pelo presente instrumento particular de contrato de locação residencial, as partes:
 
+**CORRETOR RESPONSÁVEL:**
+Nome: [NOME_CORRETOR]
+CRECI: [CRECI_CORRETOR]
+
 **LOCADOR(A) – PESSOA JURÍDICA:**
 Razão Social: [RAZAO_SOCIAL_LOCADOR]
 CNPJ: [CNPJ_LOCADOR]
@@ -248,6 +260,10 @@ E por estarem assim justos e contratados, firmam o presente contrato.
     content: `**CONTRATO DE LOCAÇÃO COMERCIAL ENTRE PESSOAS JURÍDICAS**
 
 Pelo presente instrumento particular de contrato de locação comercial, as partes abaixo identificadas:
+
+**CORRETOR RESPONSÁVEL:**
+Nome: [NOME_CORRETOR]
+CRECI: [CRECI_CORRETOR]
 
 **LOCADOR(A):**
 Razão Social: [RAZAO_SOCIAL_LOCADOR]
@@ -336,6 +352,10 @@ CNPJ: 27.960.990/0001-66
 
 **1. DAS PARTES CONTRATANTES**
 
+**CORRETOR RESPONSÁVEL:**
+Nome: [NOME_CORRETOR]
+CRECI: [CRECI_CORRETOR]
+
 **CONTRATADA:**
 MR3X TECNOLOGIA LTDA, pessoa jurídica de direito privado, inscrita no CNPJ sob o nº 27.960.990/0001-66, com sede em [ENDERECO_MR3X], doravante denominada "MR3X".
 
@@ -405,6 +425,10 @@ Confirmação eletrônica via plataforma MR3X.`
     name: "Parceria Comercial - Afiliados MR3X",
     description: "Contrato de parceria e comissionamento para afiliados",
     content: `**CONTRATO DE PARCERIA COMERCIAL E COMISSIONAMENTO – AFILIADOS MR3X**
+
+**CORRETOR RESPONSÁVEL:**
+Nome: [NOME_CORRETOR]
+CRECI: [CRECI_CORRETOR]
 
 Pelo presente instrumento particular, de um lado:
 
@@ -479,6 +503,10 @@ E por estarem assim justos e contratados, firmam o presente instrumento.
     name: "Administração Condominial",
     description: "Contrato de prestação de serviços de administração condominial",
     content: `**CONTRATO DE PRESTAÇÃO DE SERVIÇOS DE ADMINISTRAÇÃO CONDOMINIAL**
+
+**CORRETOR RESPONSÁVEL:**
+Nome: [NOME_CORRETOR]
+CRECI: [CRECI_CORRETOR]
 
 Pelo presente instrumento particular, as partes:
 
