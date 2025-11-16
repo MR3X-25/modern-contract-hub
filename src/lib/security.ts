@@ -1,9 +1,16 @@
 import CryptoJS from 'crypto-js';
 
 export const generateToken = (): string => {
-  const timestamp = Date.now();
-  const random = Math.random().toString(36).substring(2, 15);
-  return `MR3X-${timestamp}-${random}`.toUpperCase();
+  const currentYear = new Date().getFullYear();
+  const random = Math.random().toString(36).substring(2, 15).toUpperCase();
+  const timestamp = Date.now().toString(36).toUpperCase();
+  return `MR3X-CTR-${currentYear}-${random}${timestamp}`;
+};
+
+export const validateInspectionToken = (token: string): boolean => {
+  const currentYear = new Date().getFullYear();
+  const pattern = new RegExp(`^MR3X-ACD-${currentYear}-[A-Z0-9]+$`);
+  return pattern.test(token);
 };
 
 export const generateHash = (data: string, ip: string): string => {
