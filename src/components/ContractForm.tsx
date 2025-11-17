@@ -47,7 +47,34 @@ export const ContractForm = ({ onFormChange, onGeneratePreview }: ContractFormPr
     const placeholders = template.content.match(/\[([^\]]+)\]/g);
     if (!placeholders) return [];
 
-    return [...new Set(placeholders.map(p => p.replace(/[\[\]]/g, '')))];
+    // Filter out agency fields and special fields
+    const excludedFields = [
+      'NOME_AGENCIA', 'CNPJ_AGENCIA', 'ENDERECO_AGENCIA', 
+      'TEL_AGENCIA', 'EMAIL_AGENCIA', 'REPRESENTANTE_AGENCIA',
+      'INDICE_REAJUSTE'
+    ];
+
+    return [...new Set(placeholders.map(p => p.replace(/[\[\]]/g, '')))]
+      .filter(field => !excludedFields.includes(field));
+  };
+
+  const getFieldType = (field: string): 'text' | 'email' | 'tel' | 'date' => {
+    if (field.includes('EMAIL')) return 'email';
+    if (field.includes('TELEFONE') || field.includes('TEL_') || field.includes('WHATSAPP')) return 'tel';
+    if (field.includes('DATA_')) return 'date';
+    return 'text';
+  };
+
+  const validateField = (field: string, value: string): boolean => {
+    if (field.includes('EMAIL') && value) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return emailRegex.test(value);
+    }
+    if ((field.includes('TELEFONE') || field.includes('WHATSAPP')) && value) {
+      const phoneRegex = /^\+?55?\s?\(?[1-9]{2}\)?\s?9?\d{4}-?\d{4}$/;
+      return phoneRegex.test(value.replace(/\s/g, ''));
+    }
+    return true;
   };
 
   return (
@@ -114,10 +141,11 @@ export const ContractForm = ({ onFormChange, onGeneratePreview }: ContractFormPr
                   <Label htmlFor="TEL_AGENCIA" className="text-xs text-foreground">Telefone</Label>
                   <Input
                     id="TEL_AGENCIA"
+                    type="tel"
                     value={formData['TEL_AGENCIA'] || ''}
                     onChange={(e) => handleFieldChange('TEL_AGENCIA', e.target.value)}
                     className="bg-input border-border text-foreground"
-                    placeholder="(00) 00000-0000"
+                    placeholder="+55 (11) 98888-8888"
                   />
                 </div>
                 <div className="space-y-2">
@@ -128,7 +156,7 @@ export const ContractForm = ({ onFormChange, onGeneratePreview }: ContractFormPr
                     value={formData['EMAIL_AGENCIA'] || ''}
                     onChange={(e) => handleFieldChange('EMAIL_AGENCIA', e.target.value)}
                     className="bg-input border-border text-foreground"
-                    placeholder="contato@imobiliaria.com"
+                    placeholder="contato@agencia.com"
                   />
                 </div>
                 <div className="space-y-2">
@@ -144,21 +172,61 @@ export const ContractForm = ({ onFormChange, onGeneratePreview }: ContractFormPr
               </div>
             </div>
 
+            {/* Índice de Reajuste */}
+            <div className="mb-4 p-4 bg-muted rounded-lg border border-border">
+              <Label htmlFor="INDICE_REAJUSTE" className="text-sm font-semibold text-foreground mb-2 block">
+                📊 Índice de Reajuste Anual
+              </Label>
+              <Select 
+                value={formData['INDICE_REAJUSTE'] || ''} 
+                onValueChange={(value) => handleFieldChange('INDICE_REAJUSTE', value)}
+              >
+                <SelectTrigger id="INDICE_REAJUSTE" className="bg-input border-border">
+                  <SelectValue placeholder="Selecione o índice de reajuste" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="IGPM">IGP-M (Índice Geral de Preços do Mercado)</SelectItem>
+                  <SelectItem value="IPCA">IPCA (Índice de Preços ao Consumidor Amplo)</SelectItem>
+                  <SelectItem value="INPC">INPC (Índice Nacional de Preços ao Consumidor)</SelectItem>
+                  <SelectItem value="IPC">IPC (Índice de Preços ao Consumidor)</SelectItem>
+                  <SelectItem value="OUTROS">Outros (especificar no contrato)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[60vh] overflow-y-auto pr-2">
-              {getFormFields().map((field) => (
-                <div key={field} className="space-y-2">
-                  <Label htmlFor={field} className="text-sm text-foreground">
-                    {field.replace(/_/g, ' ')}
-                  </Label>
-                  <Input
-                    id={field}
-                    value={formData[field] || ''}
-                    onChange={(e) => handleFieldChange(field, e.target.value)}
-                    className="bg-input border-border text-foreground"
-                    placeholder={`Digite ${field.replace(/_/g, ' ').toLowerCase()}`}
-                  />
-                </div>
-              ))}
+              {getFormFields().map((field) => {
+                const fieldType = getFieldType(field);
+                const isInvalid = formData[field] && !validateField(field, formData[field]);
+                
+                return (
+                  <div key={field} className="space-y-2">
+                    <Label htmlFor={field} className="text-sm text-foreground">
+                      {field.replace(/_/g, ' ')}
+                      {field.includes('EMAIL') && ' *'}
+                      {(field.includes('TELEFONE') || field.includes('WHATSAPP')) && ' (WhatsApp)'}
+                    </Label>
+                    <Input
+                      id={field}
+                      type={fieldType}
+                      value={formData[field] || ''}
+                      onChange={(e) => handleFieldChange(field, e.target.value)}
+                      className={`bg-input border-border text-foreground ${isInvalid ? 'border-red-500' : ''}`}
+                      placeholder={
+                        fieldType === 'email' ? 'email@exemplo.com' :
+                        fieldType === 'tel' ? '+55 (11) 98888-8888' :
+                        fieldType === 'date' ? 'dd/mm/aaaa' :
+                        `Digite ${field.replace(/_/g, ' ').toLowerCase()}`
+                      }
+                    />
+                    {isInvalid && (
+                      <p className="text-xs text-red-500">
+                        {field.includes('EMAIL') ? 'E-mail inválido' : 'Telefone inválido. Use: +55 (11) 98888-8888'}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
             </div>
 
             <InspectionUpload onInspectionChange={handleInspectionChange} />
