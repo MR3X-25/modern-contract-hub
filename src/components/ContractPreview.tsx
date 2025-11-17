@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import { QRCodeSVG } from 'qrcode.react';
 import Barcode from 'react-barcode';
 import html2canvas from 'html2canvas';
@@ -11,6 +12,8 @@ import { generateContractMetadata } from '@/lib/security';
 import { toast } from 'sonner';
 import { SignatureData } from './DigitalSignature';
 import { InspectionData } from './InspectionUpload';
+import { TermsAcceptanceModal } from './TermsAcceptanceModal';
+import { WhatsAppSender } from './WhatsAppSender';
 
 interface ContractPreviewProps {
   content: string;
@@ -37,6 +40,10 @@ export const ContractPreview = ({
     timestamp: string;
   } | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [showWhatsAppSender, setShowWhatsAppSender] = useState(false);
+  const [generatedPdfBlob, setGeneratedPdfBlob] = useState<Blob | null>(null);
   const previewRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -46,6 +53,12 @@ export const ContractPreview = ({
   }, [content]);
 
   const handleGeneratePDF = async () => {
+    if (!termsAccepted) {
+      toast.error('É necessário aceitar os termos de responsabilidade antes de gerar o PDF');
+      setShowTermsModal(true);
+      return;
+    }
+
     if (!previewRef.current || !metadata) return;
 
     setIsGenerating(true);
@@ -70,9 +83,20 @@ export const ContractPreview = ({
       const imgY = 10;
 
       pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+      
+      // Save PDF
       pdf.save(`contrato-mr3x-${metadata.token}.pdf`);
       
+      // Create blob for WhatsApp
+      const pdfBlob = pdf.output('blob');
+      setGeneratedPdfBlob(pdfBlob);
+      
       toast.success('PDF gerado com sucesso!');
+      
+      // Ask if user wants to send via WhatsApp
+      setTimeout(() => {
+        setShowWhatsAppSender(true);
+      }, 500);
     } catch (error) {
       console.error('Erro ao gerar PDF:', error);
       toast.error('Erro ao gerar PDF');
@@ -99,10 +123,36 @@ export const ContractPreview = ({
 
   return (
     <div className="space-y-4">
+      {/* Terms Acceptance */}
+      <Card className="p-4 bg-card border-border print:hidden">
+        <div className="flex items-start gap-3">
+          <Checkbox
+            id="terms-acceptance"
+            checked={termsAccepted}
+            onCheckedChange={(checked) => setTermsAccepted(checked as boolean)}
+            className="mt-1"
+          />
+          <div className="flex-1">
+            <label
+              htmlFor="terms-acceptance"
+              className="text-sm font-medium cursor-pointer"
+            >
+              Aceito os termos de isenção de responsabilidade da MR3X
+            </label>
+            <button
+              onClick={() => setShowTermsModal(true)}
+              className="text-xs text-primary hover:underline block mt-1"
+            >
+              Clique aqui para ler os termos completos
+            </button>
+          </div>
+        </div>
+      </Card>
+
       <div className="flex gap-2 print:hidden">
         <Button
           onClick={handleGeneratePDF}
-          disabled={isGenerating}
+          disabled={isGenerating || !termsAccepted}
           className="flex-1 bg-gradient-to-r from-primary to-teal hover:opacity-90 text-primary-foreground font-bold"
         >
           {isGenerating ? 'Gerando...' : 'Baixar PDF'}
@@ -116,7 +166,26 @@ export const ContractPreview = ({
         </Button>
       </div>
 
-      <Card className="bg-white text-gray-900 p-8 print:shadow-none relative overflow-hidden" ref={previewRef}>
+      <TermsAcceptanceModal
+        open={showTermsModal}
+        onOpenChange={setShowTermsModal}
+        onAccept={() => setTermsAccepted(true)}
+      />
+
+      {showWhatsAppSender && generatedPdfBlob && metadata && (
+        <WhatsAppSender
+          pdfBlob={generatedPdfBlob}
+          contractToken={metadata.token}
+          onClose={() => setShowWhatsAppSender(false)}
+        />
+      )}
+
+      <Card className="bg-white text-gray-900 p-8 print:shadow-none relative overflow-hidden" ref={previewRef} style={{ 
+        margin: '0 auto',
+        maxWidth: '21cm',
+        minHeight: '29.7cm',
+        padding: '2cm 2cm 2cm 3cm'
+      }}>
         {/* Watermark CONFIDENCIAL */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-5 print:opacity-10" style={{ transform: 'rotate(-45deg)' }}>
           <div className="text-9xl font-black tracking-wider">
@@ -140,24 +209,26 @@ export const ContractPreview = ({
         <div style={{ marginLeft: '30px' }}>
           {/* Header Centralizado */}
           <div className="text-center mb-8 border-b-4 border-gray-900 pb-6">
-            <div className="flex justify-center items-center gap-8 mb-4">
-              <img src={logoMr3x3d} alt="MR3X Logo" className="h-24 w-auto object-contain" />
+            <div className="flex justify-center items-center gap-6 mb-4">
+              <img src={logoMr3x3d} alt="MR3X Logo" className="h-20 w-auto object-contain" style={{ maxWidth: '3.5cm' }} />
               
-              <div className="text-center">
-                <h1 className="text-5xl font-black text-gray-900 tracking-tight mb-2">
+              <div className="text-center" style={{ maxWidth: '8cm' }}>
+                <h1 className="text-3xl font-black text-gray-900 tracking-tight mb-1">
                   CONTRATO
                 </h1>
-                <p className="text-lg font-bold text-gray-700 uppercase tracking-wide">
-                  MR3X - Tecnologia em Gestão de<br />Pagamentos e Cobranças de Aluguéis
+                <p className="text-xs font-bold text-gray-700 uppercase tracking-wide leading-tight">
+                  MR3X - Tecnologia em Gestão de Pagamentos e Cobranças de Aluguéis
                 </p>
               </div>
 
-              <QRCodeSVG
-                value={`https://mr3x.com.br/verify/${metadata.hash}`}
-                size={80}
-                level="H"
-                includeMargin={true}
-              />
+              <div style={{ width: '3.5cm', height: '3.5cm' }} className="flex items-center justify-center">
+                <QRCodeSVG
+                  value={`https://mr3x.com.br/verify/${metadata.hash}`}
+                  size={96}
+                  level="H"
+                  includeMargin={true}
+                />
+              </div>
             </div>
 
             {agencyName && (
@@ -300,6 +371,12 @@ export const ContractPreview = ({
             <p className="font-semibold">MR3X TECNOLOGIA LTDA • CNPJ: 27.960.990/0001-66</p>
             <p className="mt-1">Documento protegido por criptografia SHA-256 e tokens únicos</p>
             <p className="mt-1">Verificação de autenticidade: https://mr3x.com.br/verify/{metadata.hash}</p>
+            <p className="mt-3 text-[9px] leading-tight text-gray-500 italic">
+              A MR3X atua apenas como plataforma tecnológica para geração e armazenamento deste documento. 
+              Todo o conteúdo, termos, valores e informações aqui inseridos são de responsabilidade exclusiva 
+              das partes. A MR3X não revisa, valida ou participa de negociações, nem responde por inadimplência, 
+              descumprimento ou qualquer acordo firmado entre os envolvidos.
+            </p>
           </div>
         </div>
       </Card>
