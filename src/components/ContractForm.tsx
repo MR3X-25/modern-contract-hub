@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { contractTemplates } from '@/lib/contractTemplates';
 import { InspectionUpload, InspectionData } from './InspectionUpload';
+import { CepInput } from './CepInput';
 
 export interface ContractFormData {
   templateId: string;
@@ -31,6 +32,23 @@ export const ContractForm = ({ onFormChange, onGeneratePreview }: ContractFormPr
 
   const handleFieldChange = (field: string, value: string) => {
     const updatedData = { ...formData, [field]: value };
+    setFormData(updatedData);
+    onFormChange({ templateId: selectedTemplate, fields: updatedData, inspection: inspectionData });
+  };
+
+  const handleCepAddressFound = (fieldPrefix: string, address: {
+    street: string;
+    neighborhood: string;
+    city: string;
+    state: string;
+  }) => {
+    const updatedData = {
+      ...formData,
+      [`${fieldPrefix}_ENDERECO`]: address.street,
+      [`${fieldPrefix}_BAIRRO`]: address.neighborhood,
+      [`${fieldPrefix}_CIDADE`]: address.city,
+      [`${fieldPrefix}_ESTADO`]: address.state,
+    };
     setFormData(updatedData);
     onFormChange({ templateId: selectedTemplate, fields: updatedData, inspection: inspectionData });
   };
@@ -198,6 +216,21 @@ export const ContractForm = ({ onFormChange, onGeneratePreview }: ContractFormPr
               {getFormFields().map((field) => {
                 const fieldType = getFieldType(field);
                 const isInvalid = formData[field] && !validateField(field, formData[field]);
+                
+                // Check if field is a CEP field
+                if (field.includes('CEP')) {
+                  const fieldPrefix = field.replace('_CEP', '');
+                  return (
+                    <CepInput
+                      key={field}
+                      id={field}
+                      label={field.replace(/_/g, ' ')}
+                      value={formData[field] || ''}
+                      onChange={(value) => handleFieldChange(field, value)}
+                      onAddressFound={(address) => handleCepAddressFound(fieldPrefix, address)}
+                    />
+                  );
+                }
                 
                 return (
                   <div key={field} className="space-y-2">

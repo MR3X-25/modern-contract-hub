@@ -184,7 +184,7 @@ export const ContractPreview = ({
         margin: '0 auto',
         maxWidth: '21cm',
         minHeight: '29.7cm',
-        padding: '2cm 2cm 2cm 3cm'
+        padding: '2cm 1cm 2cm 2cm'
       }}>
         {/* Watermark CONFIDENCIAL */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-5 print:opacity-10" style={{ transform: 'rotate(-45deg)' }}>

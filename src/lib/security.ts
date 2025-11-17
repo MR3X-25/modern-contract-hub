@@ -9,7 +9,7 @@ export const generateToken = (): string => {
 
 export const validateInspectionToken = (token: string): boolean => {
   const currentYear = new Date().getFullYear();
-  const pattern = new RegExp(`^MR3X-ACD-${currentYear}-[A-Z0-9]+$`);
+  const pattern = new RegExp(`^MR3X-VST-${currentYear}-[A-Z0-9]+$`);
   return pattern.test(token);
 };
 

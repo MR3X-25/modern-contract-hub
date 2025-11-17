@@ -28,7 +28,7 @@ export const InspectionUpload = ({ onInspectionChange }: InspectionUploadProps) 
     setTokenError('');
     
     if (value && !validateInspectionToken(value)) {
-      setTokenError('Token inválido. Formato esperado: MR3X-ACD-[ANO CORRENTE]-[CÓDIGO]');
+      setTokenError('Token inválido. Formato esperado: MR3X-VST-[ANO CORRENTE]-[CÓDIGO]');
     }
     
     onInspectionChange({ token: value, pdfFile, pdfPreview });
@@ -89,14 +89,14 @@ export const InspectionUpload = ({ onInspectionChange }: InspectionUploadProps) 
       <div className="space-y-3">
         <div>
           <Label htmlFor="inspection-token" className="text-xs">
-            Token do Termo de Vistoria (MR3X-ACD-{new Date().getFullYear()}-XXXXX)
+            Token do Termo de Vistoria (MR3X-VST-{new Date().getFullYear()}-XXXXX)
           </Label>
           <Input
             id="inspection-token"
             value={token}
             onChange={(e) => handleTokenChange(e.target.value)}
             className={`bg-input border-border text-foreground ${tokenError ? 'border-red-500' : ''}`}
-            placeholder={`MR3X-ACD-${new Date().getFullYear()}-`}
+            placeholder={`MR3X-VST-${new Date().getFullYear()}-`}
           />
           {tokenError && (
             <p className="text-xs text-red-500 mt-1">{tokenError}</p>
@@ -113,7 +113,7 @@ export const InspectionUpload = ({ onInspectionChange }: InspectionUploadProps) 
                 <div className="border-2 border-dashed border-border rounded-lg p-4 hover:border-primary transition-colors flex flex-col items-center gap-2">
                   <Upload className="w-8 h-8 text-muted-foreground" />
                   <span className="text-sm text-muted-foreground">
-                    Clique para anexar PDF (máx. 10MB)
+                    Clique para anexar PDF (máx. 20MB)
                   </span>
                 </div>
                 <input
