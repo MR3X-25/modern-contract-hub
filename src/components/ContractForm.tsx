@@ -7,6 +7,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { contractTemplates } from '@/lib/contractTemplates';
 import { InspectionUpload, InspectionData } from './InspectionUpload';
 import { CepInput } from './CepInput';
+import { 
+  validateCPF, 
+  validateCNPJ, 
+  formatCPF, 
+  formatCNPJ, 
+  validateWhatsApp, 
+  formatWhatsApp, 
+  validateEmail 
+} from '@/lib/validators';
+import { toast } from 'sonner';
 
 export interface ContractFormData {
   templateId: string;
@@ -23,16 +33,61 @@ export const ContractForm = ({ onFormChange, onGeneratePreview }: ContractFormPr
   const [selectedTemplate, setSelectedTemplate] = useState<string>('');
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [inspectionData, setInspectionData] = useState<InspectionData>({ token: '', pdfFile: null, pdfPreview: null });
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const handleTemplateChange = (templateId: string) => {
     setSelectedTemplate(templateId);
     setFormData({});
+    setFieldErrors({});
     onFormChange({ templateId, fields: {}, inspection: inspectionData });
   };
 
   const handleFieldChange = (field: string, value: string) => {
-    const updatedData = { ...formData, [field]: value };
+    let formattedValue = value;
+    let error = '';
+
+    // Formatação e validação de CPF
+    if (field.includes('CPF') && value) {
+      formattedValue = formatCPF(value);
+      if (formattedValue.replace(/\D/g, '').length === 11) {
+        if (!validateCPF(formattedValue)) {
+          error = 'CPF inválido';
+        }
+      }
+    }
+
+    // Formatação e validação de CNPJ
+    if (field.includes('CNPJ') && value) {
+      formattedValue = formatCNPJ(value);
+      if (formattedValue.replace(/\D/g, '').length === 14) {
+        if (!validateCNPJ(formattedValue)) {
+          error = 'CNPJ inválido';
+        }
+      }
+    }
+
+    // Formatação e validação de WhatsApp
+    if ((field.includes('TELEFONE') || field.includes('WHATSAPP')) && value) {
+      formattedValue = formatWhatsApp(value);
+      if (formattedValue.replace(/\D/g, '').length >= 10) {
+        if (!validateWhatsApp(formattedValue)) {
+          error = 'WhatsApp inválido. Formato: (XX) XXXXX-XXXX';
+        }
+      }
+    }
+
+    // Validação de Email
+    if (field.includes('EMAIL') && value) {
+      if (!validateEmail(value)) {
+        error = 'Email inválido. Deve conter @';
+      }
+    }
+
+    const updatedData = { ...formData, [field]: formattedValue };
+    const updatedErrors = { ...fieldErrors, [field]: error };
+    
     setFormData(updatedData);
+    setFieldErrors(updatedErrors);
     onFormChange({ templateId: selectedTemplate, fields: updatedData, inspection: inspectionData });
   };
 
@@ -83,16 +138,36 @@ export const ContractForm = ({ onFormChange, onGeneratePreview }: ContractFormPr
     return 'text';
   };
 
-  const validateField = (field: string, value: string): boolean => {
-    if (field.includes('EMAIL') && value) {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      return emailRegex.test(value);
+  const isCepField = (field: string): boolean => {
+    return field.includes('CEP');
+  };
+
+  const getFieldPrefix = (field: string): string => {
+    // Extract prefix from fields like LOCADOR_CEP, IMOVEL_CEP, etc.
+    const parts = field.split('_');
+    return parts[0];
+  };
+
+  const handleGenerateClick = () => {
+    // Validate all fields before generating
+    const hasErrors = Object.values(fieldErrors).some(error => error !== '');
+    if (hasErrors) {
+      toast.error('Por favor, corrija os erros antes de gerar o preview');
+      return;
     }
-    if ((field.includes('TELEFONE') || field.includes('WHATSAPP')) && value) {
-      const phoneRegex = /^\+?55?\s?\(?[1-9]{2}\)?\s?9?\d{4}-?\d{4}$/;
-      return phoneRegex.test(value.replace(/\s/g, ''));
+
+    // Check required email fields
+    const fields = getFormFields();
+    const emailFields = fields.filter(f => f.includes('EMAIL'));
+    for (const field of emailFields) {
+      const value = formData[field];
+      if (value && !validateEmail(value)) {
+        toast.error(`Email inválido no campo ${field}`);
+        return;
+      }
     }
-    return true;
+
+    onGeneratePreview();
   };
 
   return (
@@ -141,9 +216,12 @@ export const ContractForm = ({ onFormChange, onGeneratePreview }: ContractFormPr
                     id="CNPJ_AGENCIA"
                     value={formData['CNPJ_AGENCIA'] || ''}
                     onChange={(e) => handleFieldChange('CNPJ_AGENCIA', e.target.value)}
-                    className="bg-input border-border text-foreground"
+                    className={`bg-input border-border text-foreground ${fieldErrors['CNPJ_AGENCIA'] ? 'border-red-500' : ''}`}
                     placeholder="00.000.000/0000-00"
                   />
+                  {fieldErrors['CNPJ_AGENCIA'] && (
+                    <p className="text-xs text-red-500">{fieldErrors['CNPJ_AGENCIA']}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="ENDERECO_AGENCIA" className="text-xs text-foreground">Endereço</Label>
@@ -162,9 +240,12 @@ export const ContractForm = ({ onFormChange, onGeneratePreview }: ContractFormPr
                     type="tel"
                     value={formData['TEL_AGENCIA'] || ''}
                     onChange={(e) => handleFieldChange('TEL_AGENCIA', e.target.value)}
-                    className="bg-input border-border text-foreground"
-                    placeholder="+55 (11) 98888-8888"
+                    className={`bg-input border-border text-foreground ${fieldErrors['TEL_AGENCIA'] ? 'border-red-500' : ''}`}
+                    placeholder="(XX) XXXXX-XXXX"
                   />
+                  {fieldErrors['TEL_AGENCIA'] && (
+                    <p className="text-xs text-red-500">{fieldErrors['TEL_AGENCIA']}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="EMAIL_AGENCIA" className="text-xs text-foreground">E-mail</Label>
@@ -173,28 +254,29 @@ export const ContractForm = ({ onFormChange, onGeneratePreview }: ContractFormPr
                     type="email"
                     value={formData['EMAIL_AGENCIA'] || ''}
                     onChange={(e) => handleFieldChange('EMAIL_AGENCIA', e.target.value)}
-                    className="bg-input border-border text-foreground"
+                    className={`bg-input border-border text-foreground ${fieldErrors['EMAIL_AGENCIA'] ? 'border-red-500' : ''}`}
                     placeholder="contato@agencia.com"
                   />
+                  {fieldErrors['EMAIL_AGENCIA'] && (
+                    <p className="text-xs text-red-500">{fieldErrors['EMAIL_AGENCIA']}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="REPRESENTANTE_AGENCIA" className="text-xs text-foreground">Representante Legal</Label>
+                  <Label htmlFor="REPRESENTANTE_AGENCIA" className="text-xs text-foreground">Representante</Label>
                   <Input
                     id="REPRESENTANTE_AGENCIA"
                     value={formData['REPRESENTANTE_AGENCIA'] || ''}
                     onChange={(e) => handleFieldChange('REPRESENTANTE_AGENCIA', e.target.value)}
                     className="bg-input border-border text-foreground"
-                    placeholder="Nome do representante"
+                    placeholder="Nome do responsável"
                   />
                 </div>
               </div>
             </div>
 
             {/* Índice de Reajuste */}
-            <div className="mb-4 p-4 bg-muted rounded-lg border border-border">
-              <Label htmlFor="INDICE_REAJUSTE" className="text-sm font-semibold text-foreground mb-2 block">
-                📊 Índice de Reajuste Anual
-              </Label>
+            <div className="space-y-2">
+              <Label htmlFor="INDICE_REAJUSTE" className="text-xs text-foreground font-semibold">Índice de Reajuste</Label>
               <Select 
                 value={formData['INDICE_REAJUSTE'] || ''} 
                 onValueChange={(value) => handleFieldChange('INDICE_REAJUSTE', value)}
@@ -207,66 +289,51 @@ export const ContractForm = ({ onFormChange, onGeneratePreview }: ContractFormPr
                   <SelectItem value="IPCA">IPCA (Índice de Preços ao Consumidor Amplo)</SelectItem>
                   <SelectItem value="INPC">INPC (Índice Nacional de Preços ao Consumidor)</SelectItem>
                   <SelectItem value="IPC">IPC (Índice de Preços ao Consumidor)</SelectItem>
-                  <SelectItem value="OUTROS">Outros (especificar no contrato)</SelectItem>
+                  <SelectItem value="OUTROS">Outros</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[60vh] overflow-y-auto pr-2">
-              {getFormFields().map((field) => {
-                const fieldType = getFieldType(field);
-                const isInvalid = formData[field] && !validateField(field, formData[field]);
-                
-                // Check if field is a CEP field
-                if (field.includes('CEP')) {
-                  const fieldPrefix = field.replace('_CEP', '');
-                  return (
+            {/* Termo de Vistoria */}
+            <InspectionUpload onInspectionChange={handleInspectionChange} />
+
+            {/* Outros Campos do Contrato */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {getFormFields().map((field) => (
+                <div key={field} className="space-y-2">
+                  {isCepField(field) ? (
                     <CepInput
-                      key={field}
                       id={field}
                       label={field.replace(/_/g, ' ')}
                       value={formData[field] || ''}
                       onChange={(value) => handleFieldChange(field, value)}
-                      onAddressFound={(address) => handleCepAddressFound(fieldPrefix, address)}
+                      onAddressFound={(address) => handleCepAddressFound(getFieldPrefix(field), address)}
                     />
-                  );
-                }
-                
-                return (
-                  <div key={field} className="space-y-2">
-                    <Label htmlFor={field} className="text-sm text-foreground">
-                      {field.replace(/_/g, ' ')}
-                      {field.includes('EMAIL') && ' *'}
-                      {(field.includes('TELEFONE') || field.includes('WHATSAPP')) && ' (WhatsApp)'}
-                    </Label>
-                    <Input
-                      id={field}
-                      type={fieldType}
-                      value={formData[field] || ''}
-                      onChange={(e) => handleFieldChange(field, e.target.value)}
-                      className={`bg-input border-border text-foreground ${isInvalid ? 'border-red-500' : ''}`}
-                      placeholder={
-                        fieldType === 'email' ? 'email@exemplo.com' :
-                        fieldType === 'tel' ? '+55 (11) 98888-8888' :
-                        fieldType === 'date' ? 'dd/mm/aaaa' :
-                        `Digite ${field.replace(/_/g, ' ').toLowerCase()}`
-                      }
-                    />
-                    {isInvalid && (
-                      <p className="text-xs text-red-500">
-                        {field.includes('EMAIL') ? 'E-mail inválido' : 'Telefone inválido. Use: +55 (11) 98888-8888'}
-                      </p>
-                    )}
-                  </div>
-                );
-              })}
+                  ) : (
+                    <>
+                      <Label htmlFor={field} className="text-xs text-foreground">
+                        {field.replace(/_/g, ' ')}
+                      </Label>
+                      <Input
+                        id={field}
+                        type={getFieldType(field)}
+                        value={formData[field] || ''}
+                        onChange={(e) => handleFieldChange(field, e.target.value)}
+                        className={`bg-input border-border text-foreground ${fieldErrors[field] ? 'border-red-500' : ''}`}
+                        placeholder={field.includes('DATA') ? 'dd/mm/aaaa' : ''}
+                      />
+                      {fieldErrors[field] && (
+                        <p className="text-xs text-red-500">{fieldErrors[field]}</p>
+                      )}
+                    </>
+                  )}
+                </div>
+              ))}
             </div>
 
-            <InspectionUpload onInspectionChange={handleInspectionChange} />
-
             <Button 
-              onClick={onGeneratePreview}
-              className="w-full bg-gradient-to-r from-teal to-primary hover:opacity-90 text-primary-foreground font-bold"
+              onClick={handleGenerateClick}
+              className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90 text-primary-foreground font-bold"
             >
               Gerar Preview do Contrato
             </Button>

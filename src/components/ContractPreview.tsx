@@ -65,12 +65,23 @@ export const ContractPreview = ({
     toast.info('Gerando PDF...');
 
     try {
+      // Temporarily show the print content
+      const printContent = previewRef.current.querySelector('[style*="display: none"]') as HTMLElement;
+      const editContent = previewRef.current.querySelector('.print\\:hidden > textarea') as HTMLElement;
+      
+      if (printContent) printContent.style.display = 'block';
+      if (editContent && editContent.parentElement) editContent.parentElement.style.display = 'none';
+
       const canvas = await html2canvas(previewRef.current, {
         scale: 2,
         useCORS: true,
         logging: false,
         backgroundColor: '#ffffff',
       });
+
+      // Restore original display
+      if (printContent) printContent.style.display = 'none';
+      if (editContent && editContent.parentElement) editContent.parentElement.style.display = 'block';
 
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'a4');
@@ -180,11 +191,11 @@ export const ContractPreview = ({
         />
       )}
 
-      <Card className="bg-white text-gray-900 p-8 print:shadow-none relative overflow-hidden" ref={previewRef} style={{ 
+      <Card className="bg-white text-gray-900 p-8 print:shadow-none relative overflow-hidden print-contract" ref={previewRef} style={{ 
         margin: '0 auto',
         maxWidth: '21cm',
         minHeight: '29.7cm',
-        padding: '2cm 1cm 2cm 2cm'
+        padding: '2cm 1cm 2cm 1.5cm'
       }}>
         {/* Watermark CONFIDENCIAL */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-5 print:opacity-10" style={{ transform: 'rotate(-45deg)' }}>
@@ -241,22 +252,26 @@ export const ContractPreview = ({
           </div>
 
           {/* Security Metadata */}
-          <div className="grid grid-cols-2 gap-2 mb-6 p-4 bg-gray-50 border border-gray-300 rounded text-xs">
-            <div>
-              <span className="font-bold">Token:</span> {metadata.token}
+          <div className="mb-6 p-4 bg-gray-50 border border-gray-300 rounded text-xs">
+            <div className="grid grid-cols-2 gap-2 mb-2">
+              <div>
+                <span className="font-bold">Token:</span> {metadata.token}
+              </div>
+              <div>
+                <span className="font-bold">Data:</span> {new Date(metadata.timestamp).toLocaleString('pt-BR')}
+              </div>
             </div>
-            <div>
-              <span className="font-bold">Data:</span> {new Date(metadata.timestamp).toLocaleString('pt-BR')}
-            </div>
-            <div className="col-span-2">
+            <div className="mb-2">
               <span className="font-bold">Hash SHA-256:</span>
-              <div className="break-all font-mono text-[10px] mt-1">{metadata.hash}</div>
+              <div className="break-words font-mono text-[10px] mt-1 overflow-wrap-anywhere">{metadata.hash}</div>
             </div>
-            <div>
-              <span className="font-bold">IP:</span> {metadata.ip}
-            </div>
-            <div>
-              <span className="font-bold">Data Eletrônica:</span> {new Date().toLocaleDateString('pt-BR')}
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <span className="font-bold">IP:</span> {metadata.ip}
+              </div>
+              <div>
+                <span className="font-bold">Data Eletrônica:</span> {new Date().toLocaleDateString('pt-BR')}
+              </div>
             </div>
           </div>
 
@@ -308,14 +323,14 @@ export const ContractPreview = ({
             />
           </div>
 
-          <div className="hidden print:block prose prose-sm max-w-none">
+          <div className="print:block prose prose-sm max-w-none text-gray-900" style={{ display: 'none' }}>
             {content.split('\n').map((line, index) => {
               const isBold = line.startsWith('**') || line.includes('CLÁUSULA') || line.includes('CONTRATO') || line.includes('LOCADOR') || line.includes('LOCATÁRIO');
               
               if (line.trim() === '') return <br key={index} />;
               
               return (
-                <p key={index} className={isBold ? 'font-bold my-2' : 'my-1'}>
+                <p key={index} className={isBold ? 'font-bold my-2' : 'my-1'} style={{ color: '#111827' }}>
                   {line.replace(/\*\*/g, '')}
                 </p>
               );
@@ -329,26 +344,26 @@ export const ContractPreview = ({
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {signatures.locador && (
-                  <div className="border border-gray-300 rounded p-4 bg-gray-50">
+                  <div className="border border-gray-300 rounded p-3 bg-gray-50">
                     <p className="font-bold text-sm mb-2">Locador(a)</p>
-                    <p className="text-xs"><span className="font-semibold">Nome:</span> {signatures.locador.name}</p>
-                    <p className="text-xs"><span className="font-semibold">CPF:</span> {signatures.locador.cpf}</p>
-                    <p className="text-xs"><span className="font-semibold">E-mail:</span> {signatures.locador.email}</p>
-                    <p className="text-xs"><span className="font-semibold">IP:</span> {signatures.locador.ip}</p>
-                    <p className="text-xs"><span className="font-semibold">Data/Hora:</span> {new Date(signatures.locador.timestamp).toLocaleString('pt-BR')}</p>
-                    <p className="text-xs break-all"><span className="font-semibold">Hash:</span> {signatures.locador.hash.substring(0, 32)}...</p>
+                    <p className="text-xs mb-1"><span className="font-semibold">Nome:</span> {signatures.locador.name}</p>
+                    <p className="text-xs mb-1"><span className="font-semibold">CPF:</span> {signatures.locador.cpf}</p>
+                    <p className="text-xs mb-1"><span className="font-semibold">E-mail:</span> {signatures.locador.email}</p>
+                    <p className="text-xs mb-1"><span className="font-semibold">IP:</span> {signatures.locador.ip}</p>
+                    <p className="text-xs mb-1"><span className="font-semibold">Data/Hora:</span> {new Date(signatures.locador.timestamp).toLocaleString('pt-BR')}</p>
+                    <p className="text-xs break-words"><span className="font-semibold">Hash:</span> <span className="font-mono text-[9px]">{signatures.locador.hash.substring(0, 32)}...</span></p>
                   </div>
                 )}
 
                 {signatures.locatario && (
-                  <div className="border border-gray-300 rounded p-4 bg-gray-50">
+                  <div className="border border-gray-300 rounded p-3 bg-gray-50">
                     <p className="font-bold text-sm mb-2">Locatário(a)</p>
-                    <p className="text-xs"><span className="font-semibold">Nome:</span> {signatures.locatario.name}</p>
-                    <p className="text-xs"><span className="font-semibold">CPF:</span> {signatures.locatario.cpf}</p>
-                    <p className="text-xs"><span className="font-semibold">E-mail:</span> {signatures.locatario.email}</p>
-                    <p className="text-xs"><span className="font-semibold">IP:</span> {signatures.locatario.ip}</p>
-                    <p className="text-xs"><span className="font-semibold">Data/Hora:</span> {new Date(signatures.locatario.timestamp).toLocaleString('pt-BR')}</p>
-                    <p className="text-xs break-all"><span className="font-semibold">Hash:</span> {signatures.locatario.hash.substring(0, 32)}...</p>
+                    <p className="text-xs mb-1"><span className="font-semibold">Nome:</span> {signatures.locatario.name}</p>
+                    <p className="text-xs mb-1"><span className="font-semibold">CPF:</span> {signatures.locatario.cpf}</p>
+                    <p className="text-xs mb-1"><span className="font-semibold">E-mail:</span> {signatures.locatario.email}</p>
+                    <p className="text-xs mb-1"><span className="font-semibold">IP:</span> {signatures.locatario.ip}</p>
+                    <p className="text-xs mb-1"><span className="font-semibold">Data/Hora:</span> {new Date(signatures.locatario.timestamp).toLocaleString('pt-BR')}</p>
+                    <p className="text-xs break-words"><span className="font-semibold">Hash:</span> <span className="font-mono text-[9px]">{signatures.locatario.hash.substring(0, 32)}...</span></p>
                   </div>
                 )}
               </div>
