@@ -99,8 +99,24 @@ All colors MUST be HSL.
     -webkit-print-color-adjust: exact;
   }
   
+  body * {
+    visibility: hidden;
+  }
+  
+  .print-contract,
+  .print-contract * {
+    visibility: visible !important;
+  }
+  
+  .print-contract {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+  
   @page {
-    margin: 1.5cm;
+    margin: 2cm 1cm 2cm 1.5cm;
     size: A4;
   }
   
