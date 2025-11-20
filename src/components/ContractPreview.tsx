@@ -72,28 +72,78 @@ export const ContractPreview = ({
       if (printContent) printContent.style.display = 'block';
       if (editContent && editContent.parentElement) editContent.parentElement.style.display = 'none';
 
+      // A4 dimensions in mm
+      const pageWidth = 210;
+      const pageHeight = 297;
+      const marginLeft = 15; // 1.5cm
+      const marginRight = 10; // 1cm
+      const marginTop = 20;
+      const marginBottom = 20;
+      const contentWidth = pageWidth - marginLeft - marginRight;
+      const contentHeight = pageHeight - marginTop - marginBottom;
+
+      // Capture with higher quality
       const canvas = await html2canvas(previewRef.current, {
-        scale: 2,
+        scale: 3,
         useCORS: true,
         logging: false,
         backgroundColor: '#ffffff',
+        width: previewRef.current.scrollWidth,
+        height: previewRef.current.scrollHeight,
       });
 
       // Restore original display
       if (printContent) printContent.style.display = 'none';
       if (editContent && editContent.parentElement) editContent.parentElement.style.display = 'block';
 
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = canvas.width;
-      const imgHeight = canvas.height;
-      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
-      const imgX = (pdfWidth - imgWidth * ratio) / 2;
-      const imgY = 10;
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+      });
 
-      pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+      const imgData = canvas.toDataURL('image/png');
+      const imgWidth = contentWidth;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      let heightLeft = imgHeight;
+      let position = marginTop;
+      let page = 1;
+
+      // Add first page
+      pdf.addImage(imgData, 'PNG', marginLeft, position, imgWidth, imgHeight);
+
+      // Add vertical barcode on left margin of first page
+      const barcodeX = 3;
+      const barcodeY = 40;
+      const barcodeWidth = 8;
+      const barcodeHeight = 200;
+
+      pdf.setFillColor(0, 0, 0);
+      for (let i = 0; i < 50; i++) {
+        const y = barcodeY + (i * barcodeHeight / 50);
+        const barHeight = Math.random() > 0.5 ? 3 : 1.5;
+        pdf.rect(barcodeX, y, barcodeWidth, barHeight, 'F');
+      }
+
+      heightLeft -= contentHeight;
+
+      // Add additional pages if needed
+      while (heightLeft > 0) {
+        page++;
+        position = -(page - 1) * contentHeight + marginTop;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', marginLeft, position, imgWidth, imgHeight);
+
+        // Add vertical barcode on each page
+        for (let i = 0; i < 50; i++) {
+          const y = barcodeY + (i * barcodeHeight / 50);
+          const barHeight = Math.random() > 0.5 ? 3 : 1.5;
+          pdf.rect(barcodeX, y, barcodeWidth, barHeight, 'F');
+        }
+
+        heightLeft -= contentHeight;
+      }
       
       // Save PDF
       pdf.save(`contrato-mr3x-${metadata.token}.pdf`);
