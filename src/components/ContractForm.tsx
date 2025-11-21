@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { contractTemplates } from '@/lib/contractTemplates';
+import { getAllTemplates, getTemplateById } from '@/lib/contractTemplates';
 import { InspectionUpload, InspectionData } from './InspectionUpload';
 import { CepInput } from './CepInput';
 import { 
@@ -114,21 +114,10 @@ export const ContractForm = ({ onFormChange, onGeneratePreview }: ContractFormPr
   };
 
   const getFormFields = () => {
-    const template = contractTemplates.find(t => t.id === selectedTemplate);
+    const template = getTemplateById(selectedTemplate);
     if (!template) return [];
 
-    const placeholders = template.content.match(/\[([^\]]+)\]/g);
-    if (!placeholders) return [];
-
-    // Filter out agency fields and special fields
-    const excludedFields = [
-      'NOME_AGENCIA', 'CNPJ_AGENCIA', 'ENDERECO_AGENCIA', 
-      'TEL_AGENCIA', 'EMAIL_AGENCIA', 'REPRESENTANTE_AGENCIA',
-      'INDICE_REAJUSTE'
-    ];
-
-    return [...new Set(placeholders.map(p => p.replace(/[\[\]]/g, '')))]
-      .filter(field => !excludedFields.includes(field));
+    return template.fields || [];
   };
 
   const getFieldType = (field: string): 'text' | 'email' | 'tel' | 'date' => {
@@ -185,7 +174,7 @@ export const ContractForm = ({ onFormChange, onGeneratePreview }: ContractFormPr
               <SelectValue placeholder="Selecione um tipo de contrato" />
             </SelectTrigger>
             <SelectContent>
-              {contractTemplates.map((template) => (
+              {getAllTemplates().map((template) => (
                 <SelectItem key={template.id} value={template.id}>
                   {template.name}
                 </SelectItem>

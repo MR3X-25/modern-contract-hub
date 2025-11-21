@@ -34,7 +34,7 @@ const Index = () => {
       return;
     }
 
-    let content = template.content;
+    let content = template.template;
     Object.entries(formData.fields).forEach(([key, value]) => {
       content = content.replace(new RegExp(`\\[${key}\\]`, 'g'), value || `[${key}]`);
     });

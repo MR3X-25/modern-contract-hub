@@ -113,7 +113,7 @@ export const InspectionUpload = ({ onInspectionChange }: InspectionUploadProps) 
                 <div className="border-2 border-dashed border-border rounded-lg p-4 hover:border-primary transition-colors flex flex-col items-center gap-2">
                   <Upload className="w-8 h-8 text-muted-foreground" />
                   <span className="text-sm text-muted-foreground">
-                    Clique para anexar PDF (máx. 20MB)
+                    Clique para anexar PDF (máx. 35MB)
                   </span>
                 </div>
                 <input

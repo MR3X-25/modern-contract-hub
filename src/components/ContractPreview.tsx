@@ -313,7 +313,7 @@ export const ContractPreview = ({
             </div>
             <div className="mb-2">
               <span className="font-bold">Hash SHA-256:</span>
-              <div className="break-words font-mono text-[10px] mt-1 overflow-wrap-anywhere">{metadata.hash}</div>
+              <div className="break-all font-mono text-[9px] mt-1" style={{ wordBreak: 'break-all' }}>{metadata.hash}</div>
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
@@ -363,7 +363,7 @@ export const ContractPreview = ({
             </div>
           )}
 
-          {/* Contract Content */}
+          {/* Contract Content - Editable in screen */}
           <div className="mb-8 print:hidden">
             <Textarea
               value={content}
@@ -373,14 +373,15 @@ export const ContractPreview = ({
             />
           </div>
 
-          <div className="print:block prose prose-sm max-w-none text-gray-900" style={{ display: 'none' }}>
+          {/* Contract Content - For print/PDF */}
+          <div className="hidden print:block prose prose-sm max-w-none text-gray-900">
             {content.split('\n').map((line, index) => {
-              const isBold = line.startsWith('**') || line.includes('CLÁUSULA') || line.includes('CONTRATO') || line.includes('LOCADOR') || line.includes('LOCATÁRIO');
+              const isBold = line.startsWith('**') || line.includes('CLÁUSULA') || line.includes('CONTRATO') || line.includes('LOCADOR') || line.includes('LOCATÁRIO') || line.includes('ADMINISTRADORA');
               
               if (line.trim() === '') return <br key={index} />;
               
               return (
-                <p key={index} className={isBold ? 'font-bold my-2' : 'my-1'} style={{ color: '#111827' }}>
+                <p key={index} className={isBold ? 'font-bold my-2' : 'my-1'} style={{ color: '#111827', lineHeight: '1.6' }}>
                   {line.replace(/\*\*/g, '')}
                 </p>
               );
@@ -398,10 +399,10 @@ export const ContractPreview = ({
                     <p className="font-bold text-sm mb-2">Locador(a)</p>
                     <p className="text-xs mb-1"><span className="font-semibold">Nome:</span> {signatures.locador.name}</p>
                     <p className="text-xs mb-1"><span className="font-semibold">CPF:</span> {signatures.locador.cpf}</p>
-                    <p className="text-xs mb-1"><span className="font-semibold">E-mail:</span> {signatures.locador.email}</p>
+                    <p className="text-xs mb-1 break-all"><span className="font-semibold">E-mail:</span> {signatures.locador.email}</p>
                     <p className="text-xs mb-1"><span className="font-semibold">IP:</span> {signatures.locador.ip}</p>
                     <p className="text-xs mb-1"><span className="font-semibold">Data/Hora:</span> {new Date(signatures.locador.timestamp).toLocaleString('pt-BR')}</p>
-                    <p className="text-xs break-words"><span className="font-semibold">Hash:</span> <span className="font-mono text-[9px]">{signatures.locador.hash.substring(0, 32)}...</span></p>
+                    <p className="text-xs"><span className="font-semibold">Hash:</span> <span className="font-mono text-[8px] break-all block mt-1">{signatures.locador.hash.substring(0, 32)}...</span></p>
                   </div>
                 )}
 
@@ -410,10 +411,10 @@ export const ContractPreview = ({
                     <p className="font-bold text-sm mb-2">Locatário(a)</p>
                     <p className="text-xs mb-1"><span className="font-semibold">Nome:</span> {signatures.locatario.name}</p>
                     <p className="text-xs mb-1"><span className="font-semibold">CPF:</span> {signatures.locatario.cpf}</p>
-                    <p className="text-xs mb-1"><span className="font-semibold">E-mail:</span> {signatures.locatario.email}</p>
+                    <p className="text-xs mb-1 break-all"><span className="font-semibold">E-mail:</span> {signatures.locatario.email}</p>
                     <p className="text-xs mb-1"><span className="font-semibold">IP:</span> {signatures.locatario.ip}</p>
                     <p className="text-xs mb-1"><span className="font-semibold">Data/Hora:</span> {new Date(signatures.locatario.timestamp).toLocaleString('pt-BR')}</p>
-                    <p className="text-xs break-words"><span className="font-semibold">Hash:</span> <span className="font-mono text-[9px]">{signatures.locatario.hash.substring(0, 32)}...</span></p>
+                    <p className="text-xs"><span className="font-semibold">Hash:</span> <span className="font-mono text-[8px] break-all block mt-1">{signatures.locatario.hash.substring(0, 32)}...</span></p>
                   </div>
                 )}
               </div>
