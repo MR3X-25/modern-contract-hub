@@ -66,21 +66,24 @@ export const ContractPreview = ({
 
     try {
       // Temporarily show the print content
-      const printContent = previewRef.current.querySelector('[style*="display: none"]') as HTMLElement;
-      const editContent = previewRef.current.querySelector('.print\\:hidden > textarea') as HTMLElement;
-      
-      if (printContent) printContent.style.display = 'block';
-      if (editContent && editContent.parentElement) editContent.parentElement.style.display = 'none';
+      const screenContent = previewRef.current.querySelector('.screen-contract-content') as HTMLElement | null;
+      const printContent = previewRef.current.querySelector('.print-contract-content') as HTMLElement | null;
 
-      // A4 dimensions in mm
+      const originalScreenDisplay = screenContent?.style.display ?? '';
+      const originalPrintDisplay = printContent?.style.display ?? '';
+
+      if (printContent) printContent.style.display = 'block';
+      if (screenContent) screenContent.style.display = 'none';
+
+      // A4 dimensions in mm (imagem ocupa toda a folha, margens definidas no layout do contrato)
       const pageWidth = 210;
       const pageHeight = 297;
-      const marginLeft = 15; // 1.5cm
-      const marginRight = 10; // 1cm
-      const marginTop = 20;
-      const marginBottom = 20;
-      const contentWidth = pageWidth - marginLeft - marginRight;
-      const contentHeight = pageHeight - marginTop - marginBottom;
+      const marginLeft = 0;
+      const marginRight = 0;
+      const marginTop = 0;
+      const marginBottom = 0;
+      const contentWidth = pageWidth;
+      const contentHeight = pageHeight;
 
       // Capture with higher quality
       const canvas = await html2canvas(previewRef.current, {
@@ -93,8 +96,8 @@ export const ContractPreview = ({
       });
 
       // Restore original display
-      if (printContent) printContent.style.display = 'none';
-      if (editContent && editContent.parentElement) editContent.parentElement.style.display = 'block';
+      if (printContent) printContent.style.display = originalPrintDisplay;
+      if (screenContent) screenContent.style.display = originalScreenDisplay;
 
       const pdf = new jsPDF({
         orientation: 'portrait',
@@ -364,7 +367,7 @@ export const ContractPreview = ({
           )}
 
           {/* Contract Content - Editable in screen */}
-          <div className="mb-8 print:hidden">
+          <div className="mb-8 print:hidden screen-contract-content">
             <Textarea
               value={content}
               onChange={(e) => onContentChange(e.target.value)}
@@ -374,7 +377,7 @@ export const ContractPreview = ({
           </div>
 
           {/* Contract Content - For print/PDF */}
-          <div className="hidden print:block prose prose-sm max-w-none text-gray-900">
+          <div className="hidden print:block prose prose-sm max-w-none text-gray-900 print-contract-content">
             {content.split('\n').map((line, index) => {
               const isBold = line.startsWith('**') || line.includes('CLÁUSULA') || line.includes('CONTRATO') || line.includes('LOCADOR') || line.includes('LOCATÁRIO') || line.includes('ADMINISTRADORA');
               
