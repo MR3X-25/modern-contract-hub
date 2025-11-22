@@ -99,10 +99,10 @@ export const ContractForm = ({ onFormChange, onGeneratePreview }: ContractFormPr
   }) => {
     const updatedData = {
       ...formData,
-      [`${fieldPrefix}_ENDERECO`]: address.street,
-      [`${fieldPrefix}_BAIRRO`]: address.neighborhood,
-      [`${fieldPrefix}_CIDADE`]: address.city,
-      [`${fieldPrefix}_ESTADO`]: address.state,
+      [`ENDERECO_${fieldPrefix}`]: address.street,
+      [`BAIRRO_${fieldPrefix}`]: address.neighborhood,
+      [`CIDADE_${fieldPrefix}`]: address.city,
+      [`ESTADO_${fieldPrefix}`]: address.state,
     };
     setFormData(updatedData);
     onFormChange({ templateId: selectedTemplate, fields: updatedData, inspection: inspectionData });
@@ -132,9 +132,20 @@ export const ContractForm = ({ onFormChange, onGeneratePreview }: ContractFormPr
   };
 
   const getFieldPrefix = (field: string): string => {
-    // Extract prefix from fields like LOCADOR_CEP, IMOVEL_CEP, etc.
+    // Para campos como CEP_LOCADOR, CEP_IMOVEL etc, usamos a parte após "CEP_"
+    if (field.startsWith('CEP_')) {
+      const [, prefix] = field.split('_');
+      return prefix;
+    }
+
+    // Suporte opcional para campos no formato LOCADOR_CEP
+    if (field.endsWith('_CEP')) {
+      const [prefix] = field.split('_');
+      return prefix;
+    }
+
     const parts = field.split('_');
-    return parts[0];
+    return parts[parts.length - 1] || field;
   };
 
   const handleGenerateClick = () => {
