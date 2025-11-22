@@ -44,8 +44,8 @@ export const InspectionUpload = ({ onInspectionChange }: InspectionUploadProps) 
       return;
     }
     
-    if (file.size > 35 * 1024 * 1024) { // 35MB limit
-      toast.error('Arquivo muito grande. Limite: 35MB');
+    if (file.size > 20 * 1024 * 1024) { // 20MB limit
+      toast.error('Arquivo muito grande. Limite: 20MB');
       return;
     }
     
@@ -105,7 +105,7 @@ export const InspectionUpload = ({ onInspectionChange }: InspectionUploadProps) 
 
         <div>
           <Label htmlFor="inspection-pdf" className="text-xs">
-            Anexar PDF do Termo de Vistoria (Limite: 35MB)
+            Anexar PDF do Termo de Vistoria (Limite: 20MB)
           </Label>
           <div className="mt-2">
             {!pdfFile ? (
@@ -113,7 +113,7 @@ export const InspectionUpload = ({ onInspectionChange }: InspectionUploadProps) 
                 <div className="border-2 border-dashed border-border rounded-lg p-4 hover:border-primary transition-colors flex flex-col items-center gap-2">
                   <Upload className="w-8 h-8 text-muted-foreground" />
                   <span className="text-sm text-muted-foreground">
-                    Clique para anexar PDF (máx. 35MB)
+                    Clique para anexar PDF (máx. 20MB)
                   </span>
                 </div>
                 <input

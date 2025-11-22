@@ -274,18 +274,18 @@ export const ContractPreview = ({
               <img src={logoMr3x3d} alt="MR3X Logo" className="h-20 w-auto object-contain" style={{ maxWidth: '3.5cm' }} />
               
               <div className="text-center" style={{ maxWidth: '8cm' }}>
-                <h1 className="text-3xl font-black text-gray-900 tracking-tight mb-1">
+                <h1 className="text-xl font-black text-gray-900 tracking-tight mb-1">
                   CONTRATO
                 </h1>
                 <p className="text-xs font-bold text-gray-700 uppercase tracking-wide leading-tight">
-                  MR3X - Tecnologia em Gestão de Pagamentos e Cobranças de Aluguéis
+                  MR3X - Tecnologia em Gestão de Pagamentos de Aluguéis
                 </p>
               </div>
 
               <div style={{ width: '3.5cm', height: '3.5cm' }} className="flex items-center justify-center">
                 <QRCodeSVG
                   value={`https://mr3x.com.br/verify/${metadata.hash}`}
-                  size={96}
+                  size={133}
                   level="H"
                   includeMargin={true}
                 />
