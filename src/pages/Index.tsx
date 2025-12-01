@@ -4,6 +4,7 @@ import { ContractPreview } from '@/components/ContractPreview';
 import { SignatureModule } from '@/components/SignatureModule';
 import { HashVerifier } from '@/components/HashVerifier';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { Navigation } from '@/components/NavLink';
 import { getTemplateById } from '@/lib/contractTemplates';
 import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -51,7 +52,12 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen p-4 md:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-primary via-purple to-teal p-4 md:p-8">
+      <Navigation />
+      <div className="absolute top-4 left-4 z-50">
+        <ThemeToggle />
+      </div>
+      
       <div className="max-w-7xl mx-auto">
         <header className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
@@ -65,7 +71,6 @@ const Index = () => {
               </p>
             </div>
           </div>
-          <ThemeToggle />
         </header>
 
         <Tabs defaultValue="generator" className="w-full">
@@ -105,6 +110,8 @@ const Index = () => {
                     inspectionData={formData.inspection}
                     signatures={signatures}
                     agencyName={formData.fields.NOME_AGENCIA || formData.fields.RAZAO_SOCIAL_IMOBILIARIA}
+                    contractType={formData.templateId}
+                    formData={formData.fields}
                   />
                 </div>
               </div>
