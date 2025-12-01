@@ -246,9 +246,9 @@ export const ContractPreview = ({
 
       <Card className="bg-white text-gray-900 p-8 print:shadow-none relative overflow-hidden print-contract" ref={previewRef} style={{ 
         margin: '0 auto',
-        maxWidth: '21cm',
+        width: '21cm',
         minHeight: '29.7cm',
-        padding: '2cm 1cm 2cm 1.5cm'
+        padding: '2cm 1cm 2cm 1cm'
       }}>
         {/* Watermark CONFIDENCIAL */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-5 print:opacity-10" style={{ transform: 'rotate(-45deg)' }}>
@@ -257,20 +257,8 @@ export const ContractPreview = ({
           </div>
         </div>
 
-        {/* Vertical Barcode on Left Margin */}
-        <div className="absolute left-0 top-0 bottom-0 flex items-center justify-center" style={{ width: '25px' }}>
-          <div style={{ transform: 'rotate(-90deg)', transformOrigin: 'center', whiteSpace: 'nowrap' }}>
-            <Barcode 
-              value={metadata.token} 
-              width={1}
-              height={40}
-              fontSize={8}
-            />
-          </div>
-        </div>
-
-        {/* Main Content with Left Padding for Barcode */}
-        <div style={{ marginLeft: '30px' }}>
+        {/* Main Content */}
+        <div>
           {/* Header Centralizado */}
           <div className="text-center mb-8 border-b-4 border-gray-900 pb-6">
             <div className="flex justify-center items-center gap-6 mb-4">
