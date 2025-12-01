@@ -14,6 +14,7 @@ import { SignatureData } from './DigitalSignature';
 import { InspectionData } from './InspectionUpload';
 import { TermsAcceptanceModal } from './TermsAcceptanceModal';
 import { WhatsAppSender } from './WhatsAppSender';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ContractPreviewProps {
   content: string;
@@ -24,6 +25,8 @@ interface ContractPreviewProps {
     locatario: SignatureData | null;
   };
   agencyName?: string;
+  contractType?: string;
+  formData?: Record<string, any>;
 }
 
 export const ContractPreview = ({ 
@@ -31,7 +34,9 @@ export const ContractPreview = ({
   onContentChange, 
   inspectionData,
   signatures,
-  agencyName 
+  agencyName,
+  contractType = 'residencial_pf',
+  formData = {}
 }: ContractPreviewProps) => {
   const [metadata, setMetadata] = useState<{
     token: string;
@@ -51,6 +56,32 @@ export const ContractPreview = ({
       generateContractMetadata(content).then(setMetadata);
     }
   }, [content]);
+
+  const saveContractToDatabase = async (pdfBlob: Blob) => {
+    if (!metadata) return;
+
+    try {
+      const { error } = await supabase
+        .from('contracts')
+        .insert({
+          token: metadata.token,
+          hash: metadata.hash,
+          contract_type: contractType,
+          content: content,
+          form_data: formData,
+          inspection_token: inspectionData?.token,
+          signatures: signatures || {},
+          ip_address: metadata.ip
+        });
+
+      if (error) throw error;
+      
+      console.log('Contrato salvo no banco de dados');
+    } catch (error: any) {
+      console.error('Erro ao salvar contrato:', error);
+      toast.error('Erro ao salvar contrato no banco de dados');
+    }
+  };
 
   const handleGeneratePDF = async () => {
     if (!termsAccepted) {
@@ -155,7 +186,10 @@ export const ContractPreview = ({
       const pdfBlob = pdf.output('blob');
       setGeneratedPdfBlob(pdfBlob);
       
-      toast.success('PDF gerado com sucesso!');
+      // Save contract to database
+      await saveContractToDatabase(pdfBlob);
+      
+      toast.success('PDF gerado e contrato salvo com sucesso!');
       
       // Ask if user wants to send via WhatsApp
       setTimeout(() => {

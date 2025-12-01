@@ -14,7 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      contracts: {
+        Row: {
+          content: string
+          contract_type: string
+          created_at: string
+          form_data: Json
+          hash: string
+          id: string
+          inspection_pdf_url: string | null
+          inspection_token: string | null
+          ip_address: string | null
+          signatures: Json | null
+          token: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          content: string
+          contract_type: string
+          created_at?: string
+          form_data?: Json
+          hash: string
+          id?: string
+          inspection_pdf_url?: string | null
+          inspection_token?: string | null
+          ip_address?: string | null
+          signatures?: Json | null
+          token: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          content?: string
+          contract_type?: string
+          created_at?: string
+          form_data?: Json
+          hash?: string
+          id?: string
+          inspection_pdf_url?: string | null
+          inspection_token?: string | null
+          ip_address?: string | null
+          signatures?: Json | null
+          token?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
